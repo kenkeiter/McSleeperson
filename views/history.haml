@@ -1,0 +1,82 @@
+!!! 5
+%html{"xml:lang" => "en", :lang => "en"}
+  %head
+    %meta{:charset => 'utf-8'}/
+    %title McSleeperson -- The Classiest SleepCycle Viewer
+    %script{:type => 'text/javascript', :src => 'http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.js'}
+    %script{:type => 'text/javascript', :src => 'http://www.google.com/jsapi'}
+    %link{:href => 'http://fonts.googleapis.com/css?family=Podkova', :rel => 'stylesheet', :type => 'text/css'}
+    
+    :ruby
+      # Wow, this is ugly. I don't really care.. In fact, I think I'll have another drink hehehe...
+      js_rows = []
+      @sessions.each do |s|
+        event_i = -1
+        s.sleep_events.each do |event|
+          event_i += 1
+          if event_i == 0 #annotate the first sample in the series
+            js_rows << "[new Date(#{event.time.strftime("%Y, %m, %d, %H, %M, %S, %L")}), #{event.intensity}, 'Sleep Session (duration: #{Time.at(s.duration).gmtime.strftime('%R:%S')})']"
+          else
+            js_rows << "[new Date(#{event.time.strftime("%Y, %m, %d, %H, %M, %S, %L")}), #{event.intensity}, undefined]"
+          end
+        end
+      end
+      js_rows = js_rows.join(",\n")
+    - 
+    
+    :javascript
+      google.load('visualization', '1', {'packages':['annotatedtimeline']});
+      
+      var redrawChart = function() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('datetime', 'Date');
+        data.addColumn('number', 'Intensity');
+        data.addColumn('string', 'title1');
+        data.addRows([
+          #{js_rows}
+        ]);
+
+        var chart = new google.visualization.AnnotatedTimeLine(document.getElementById('chart_div'));
+        chart.draw(data, {displayAnnotations: true, scaleType: 'allmaximized'});
+      }
+      
+      google.setOnLoadCallback(redrawChart);
+      
+      $(document).ready(function(){
+        $('#sessions').change(function(){
+          $('#controls-form').submit();
+        });
+      });
+      
+    :css
+      body{
+        margin: 20px; 
+        font-family: Helvetica, Arial, "Lucida Grande", sans-serif; 
+        font-size: 12px; 
+        background-color: #333; 
+      }
+      
+      header.section{ width: 400px; display: block; margin: 0 auto; color: #ccc; margin-bottom: 20px; }
+      header.section h1{ margin: 0 auto; font-family: 'Podkova', sans-serif; color: #cc3300; font-size: 50px; text-align: center;}
+      header.section span.tagline{font-size: 14px; display: block; margin-bottom: 10px; text-align: center;}
+      header.section #controls-form{text-align: center;}
+      header.section a{ color: #fff; }
+      
+      section.data{ display: block; background-color: #fff; padding: 0px; }
+  %body
+    %header.section
+      %h1 McSleeperson
+      
+      %span.tagline
+        The Classiest 
+        %a{:href => 'http://itunes.apple.com/us/app/sleep-cycle-alarm-clock/id320606217?mt=8'}Sleep Cycle
+        Data Viewer
+      
+      %form#controls-form{:action => '/', :method => 'GET'}
+        %label{:for => 'sessions'} Number of recent sleep sessions to show: 
+        %select#sessions{:name => 'sessions'}
+          - (1..@session_count).each do |count|
+            %option{:value => count, :selected => (@show_sessions == count)}= count
+    
+    %section.data
+      %div#chart_div{:style => 'width: 100%; height: 300px;'}
