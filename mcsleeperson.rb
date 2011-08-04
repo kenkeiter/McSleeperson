@@ -24,7 +24,6 @@ DataMapper.setup(:default, "sqlite://#{DB_PATH}")
 puts "Loading DB from: #{DB_PATH}"
 
 class SleepSession
-  attr_reader :start_time, :end_time, :duration
   include DataMapper::Resource
   storage_names[:default] = 'ZSLEEPSESSION'
   
@@ -52,7 +51,6 @@ class SleepSession
 end
 
 class SleepEvent
-  attr_reader :time
   include DataMapper::Resource
   storage_names[:default] = 'ZSLEEPEVENT'
   
